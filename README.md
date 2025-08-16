@@ -58,13 +58,10 @@ This approach allows you to provide the necessary include paths without modifyin
 
 ## Issues
 
-If you cannot load `libSDL3_mixer`, please ensure that you have SDL_mixer 2.0,
-installed and not just 1.2. If you receive errors concerning unknown file types,
+If you cannot load `libSDL3_mixer`, please ensure that you have SDL_mixer 3.0,
+installed and not just 2.0. If you receive errors concerning unknown file types,
 please ensure that libSDL3_mixer is linked against the appropriate sound
-library, *e.g. libVorbis for ogg support*. As of writing (05-31-2015) the
-SDL_mixer 2.0 provided by brew on OSX does not link libVorbis correctly, please
-build it from source.
-
+library, *e.g. libVorbis for ogg support*.
 
 If you are sure all of this is correct, and it still will not load, please [file an issue](https://github.com/lispgames/cl-sdl3-mixer/issues/new) and specify:
 
