@@ -7,5 +7,5 @@
   :pathname "examples"
   :serial t
   :components ((:file "package")
-	       (:file "simple")
+               (:file "simple")
                (:file "music")))

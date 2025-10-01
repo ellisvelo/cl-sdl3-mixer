@@ -8,7 +8,7 @@
                     "/usr/include/"
                     "/usr/include/arm-linux-gnueabihf"
                     "/usr/local/include/SDL3"
-		    ".*/SDL3/SDL_.*.h"
+                    ".*/SDL3/SDL_.*.h"
                     #+darwin "/opt/homebrew/include/SDL3")
   :sysincludes (cl:append
                  #+darwin '("/opt/homebrew/include")
