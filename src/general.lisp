@@ -1,6 +1,7 @@
 (in-package #:sdl3-mixer)
 
 (defmacro create-sdl-free-function (free-function sdl-object)
+  "A macro to free and invalidate the SDL-OBJECT."
   `(progn (tg:cancel-finalization ,sdl-object)
           (,free-function ,sdl-object)
           (autowrap:invalidate ,sdl-object)))
@@ -9,12 +10,11 @@
   "Get the version of SDL_mixer that is linked against your program and return
 the major, minor, and micro version."
   (let* ((version (mix-version))
-	 (major (floor (/ version 1000000)))
-	 (minor (floor (mod (/ version 1000) 1000)))
-	 (micro (mod version 1000)))
+         (major (floor version 1000000))
+         (minor (floor (mod (/ version 1000) 1000)))
+         (micro (mod version 1000)))
     (values major minor micro)))
 
-#+nil(autowrap:define-bitmask-from-enum (init-flags sdl3-ffi:mix-init-flags))
 (autowrap:define-bitmask-from-constants (init-flags)
   sdl3-ffi:+mix-init-flac+
   sdl3-ffi:+mix-init-mod+
@@ -39,8 +39,8 @@ of these values or a combination thereof :ogg, :wave, :mod, :mp3"
   (mix-quit))
 
 (defun open-audio (device-id &key (frequency sdl3-ffi:+mix-default-frequency+)
-			       (format sdl3-ffi:+mix-default-format+)
-			       (channels sdl3-ffi:+mix-default-channels+))
+                                  (format sdl3-ffi:+mix-default-format+)
+                                  (channels sdl3-ffi:+mix-default-channels+))
   "Open an audio device for playback."
   (c-let ((audio-spec sdl3-ffi:sdl-audio-spec))
     (setf (audio-spec :freq) frequency)
@@ -140,10 +140,11 @@ Channels are 0 indexed!"
 (defun load-music (music-file-name)
   "Loads music from a file. Returns a mix-music object"
   (autocollect (ptr)
-      (check-null (mix-load-mus (namestring music-file-name)))
+               (check-null (mix-load-mus (namestring music-file-name)))
     (mix-free-music ptr)))
 
 (defun free-music (mix-music-object)
+  "Free and invalidate the MIX-MUSIC-OBJECT."
   (create-sdl-free-function mix-free-music mix-music-object))
 
 (defun play-music (mix-music-object &optional (loops -1))
@@ -152,6 +153,10 @@ default loops is -1 which makes the music loop indefinitely. Returns 0 on
 success -1 on error"
   (check-rc (mix-play-music mix-music-object
                             loops)))
+
+(defun playing-music-p ()
+  "Returns T when music is playing"
+  (sdl-mixer-true-p (mix-playing-music)))
 
 (defun fade-in-music (mix-music-object &optional (loops -1) (ms 1000))
   "Fade in music over MS milliseconds and repeat as specified by LOOPS. The
