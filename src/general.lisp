@@ -108,11 +108,11 @@ channel the sample is played on. NOTE: Channels are 0 indexed!"
   ;; https://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer_frame.html
   (check-rc (mix-play-channel-timed channel mix-chunk loops -1)))
 
-(defun set-channel-finished-callback (cffi-callback-fn)
+(defun set-channel-finished-callback (cffi-callback-channel-finished-fn)
   "Sets a callback that will be invoked after the channel has finished
-playing. CFFI-CALLBACK-FN is defined with CFFI:DEFCALLBACK. Using a value of NIL
-will disable the callback."
-  (mix-channel-finished cffi-callback-fn))
+playing. CFFI-CALLBACK-FINISHED-FN is defined with CFFI:DEFCALLBACK and uses a
+channel argument. Specifying a value of NIL will disable the callback."
+  (mix-channel-finished cffi-callback-channel-finished-fn))
 
 (defun playing (channel)
   "Checks whether or not a channel is currently playing. It will return a 1 for
@@ -153,6 +153,12 @@ default loops is -1 which makes the music loop indefinitely. Returns 0 on
 success -1 on error"
   (check-rc (mix-play-music mix-music-object
                             loops)))
+
+(defun set-music-finished-callback (cffi-callback-music-finished-fn)
+  "Sets a callback that will be invoked after the music has finished
+playing. CFFI-CALLBACK-MUSIC-FINISHED-FN is defined with CFFI:DEFCALLBACK and
+does not use any arguments. Using a value of NIL will disable the callback."
+  (mix-hook-music-finished cffi-callback-music-finished-fn))
 
 (defun playing-music-p ()
   "Returns T when music is playing"

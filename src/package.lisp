@@ -23,6 +23,7 @@
    #:load-music
    #:free-music
    #:play-music
+   #:set-music-finished-callback
    #:halt-music
    #:fade-in-music
    #:fade-out-music
