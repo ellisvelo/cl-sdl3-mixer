@@ -1,7 +1,5 @@
 (in-package #:sdl3-mixer-examples)
 
-(require 'sdl3-mixer)
-
 (defun simple ()
   (with-init (:everything)
     (sdl3-mixer:init)
@@ -43,7 +41,7 @@
                        (clear-renderer my-renderer)
                        (render-present my-renderer))
                 (:quit ()
-                       ;; Not really needed because the quit will destory any
+                       ;; Not really needed because quit will destory any
                        ;; created objects
                        (sdl3-mixer:destroy-track sound-track)
                        (sdl3-mixer:destroy-audio sound-audio)
