@@ -5,8 +5,8 @@
     (sdl3-mixer:init)
     (let ((mixer (sdl3-mixer:create-mixer-device)))
       (with-window (my-window :title "Mixer Example"
-                              :w 100
-                              :h 100)
+                              :w 200
+                              :h 200)
         (with-renderer (my-renderer my-window)
           (flet ((clear-renderer (renderer)
                    (set-render-draw-color renderer 0 0 0 255)

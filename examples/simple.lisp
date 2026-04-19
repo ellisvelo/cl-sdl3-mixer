@@ -6,8 +6,8 @@
     (let ((mixer (sdl3-mixer:create-mixer-device))
           (sample-ogg (asdf:system-relative-pathname 'sdl3-mixer-examples "examples/sample.ogg")))
       (with-window (my-window :title "Mixer Example"
-                              :w 100
-                              :h 100)
+                              :w 200
+                              :h 200)
         (with-renderer (my-renderer my-window)
           (flet ((clear-renderer (renderer)
                    (set-render-draw-color renderer 0 0 0 255)
