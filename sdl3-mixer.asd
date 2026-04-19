@@ -14,7 +14,7 @@
    (:file "library")
    (:file "autowrap")
    (:file "conditions")
-   (:file "general")
+   (:file "mixer")
    (:module autowrap-spec
     :pathname "spec"
     :components
