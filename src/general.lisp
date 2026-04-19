@@ -15,183 +15,99 @@ the major, minor, and micro version."
          (micro (mod version 1000)))
     (values major minor micro)))
 
-(autowrap:define-bitmask-from-constants (init-flags)
-  sdl3-ffi:+mix-init-flac+
-  sdl3-ffi:+mix-init-mod+
-  sdl3-ffi:+mix-init-mp3+
-  sdl3-ffi:+mix-init-ogg+
-  sdl3-ffi:+mix-init-mid+
-  sdl3-ffi:+mix-init-opus+
-  sdl3-ffi:+mix-init-wavpack+)
-
 (defun sdl-mixer-true-p (integer-bool)
-  "Use this function to convert from a low level wrapped SDL_Mixer function
-returning an SDL_true into CL's boolean type system."
+  "This function converts an integer into CL's boolean type system."
   (= 1 integer-bool))
 
-(defun init (&rest flags)
-  "Initialize the SDL mixer specifying the formats you wish to use. Must be one
-of these values or a combination thereof :ogg, :wave, :mod, :mp3"
-  (mix-init (mask-apply 'init-flags flags)))
+(defun init ()
+  "Initialize the SDL mixer."
+  (mix-init))
 
 (defun quit ()
-  "Cleans up SDL Mixer"
+  "Cleans up SDL Mixer."
   (mix-quit))
 
-(defun open-audio (device-id &key (frequency sdl3-ffi:+mix-default-frequency+)
-                                  (format sdl3-ffi:+mix-default-format+)
-                                  (channels sdl3-ffi:+mix-default-channels+))
-  "Open an audio device for playback."
-  (c-let ((audio-spec sdl3-ffi:sdl-audio-spec))
-    (setf (audio-spec :freq) frequency)
-    (setf (audio-spec :format) (enum-value '(:enum (sdl3-ffi:sdl-audio-format)) format))
-    (setf (audio-spec :channels) channels)
-    (check-true (mix-open-audio device-id (audio-spec &)))))
+(defun create-mixer-device (&key (audio-device-id sdl3:+audio-device-default-playback+) audio-spec)
+  "Create a mixer that plays sound directly to an audio device."
+  (check-null (mix-create-mixer-device audio-device-id audio-spec)))
 
-(defun close-audio ()
+(defun get-mixer-format (mixer)
+  "Get the audio format a mixer is generating."
+  (c-with ((audio-spec sdl3-ffi:sdl-audio-spec))
+    (check-true (mix-get-mixer-format mixer (audio-spec &)))
+    audio-spec))
+
+(defun get-mixer-gain (mixer)
+  "Get a mixer's master gain control."
+  (mix-get-mixer-gain mixer))
+
+(defun set-mixer-gain (mixer gain)
+  "Set a mixer's master gain control."
+  (declare (float gain))
+  (check-true (mix-set-mixer-gain mixer gain)))
+
+(defun destroy-mixer (mixer)
   "Closes the mixer"
-  (mix-close-audio))
+  (mix-destroy-mixer mixer))
 
-(defun query-spec ()
-  "Gets the output format in use by the opened audio device"
-  (c-with ((freq :int)
-           (fmt sdl3-ffi:uint16)
-           (chans :int))
-    (check-non-zero (mix-query-spec (freq &) (fmt &) (chans &)))
-    (values freq (enum-key '(:enum (audio-format)) fmt) chans)))
+(defun load-audio (mixer file-path &optional (predecode 0))
+  "Load audio for playback from a file using the MIXER, FILE-PATH, and
+ optionally whether to return fully uncompressed data."
+  (check-null (mix-load-audio mixer (namestring file-path) predecode)))
 
-(defun load-wav (sample-file-name)
-  "Loads the sample specified by the sample-file-name. Returns a mix-chunk.
-sdl3-mixer must be initialized and open-audio must be called prior to."
-  ;;Note the original Mix_LoadWAV function is actually a C preprocessor function
-  ;;macro that was not collected by c2ffi. However the manual does state that
-  ;;Mix_LoadWAV is equivalent to calling
-  ;;Mix_LoadWAV_RW(SDL_RWFromFile(file,"rb"), 1) where file is a character array
-  ;;representing the file
-  ;;https://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer.html#SEC19
-  (autocollect (ptr)
-               (check-null (mix-load-wav-io
-                            (sdl-io-from-file
-                             (namestring sample-file-name) "rb") 1))
-    (mix-free-chunk ptr)))
+(defun destroy-audio (audio)
+  "Destroy the specified audio."
+  (mix-destroy-audio audio))
 
-(defun free-chunk (chunk)
-  "Free the memory used in the chunk and then free the chunk itself. Do not free
-the chunk while it is playing; halt the channel it's playing on using
-halt-channel prior to freeing the chunk."
-  (create-sdl-free-function mix-free-chunk chunk))
+(defun create-track (mixer)
+  "Create a new track on a mixer."
+  (check-null (mix-create-track mixer)))
 
-(defun allocate-channels (channels)
-  "Set the number of channels to be mixed. Opening too many channels may result
-in a segfault. This can be called at any time even while samples are playing.
-Passing a number lower than previous calls will close unused channels. It
-returns the number of channels allocated. NOTE: Channels are 0 indexed!"
-  ;;This supposedly never fails so no check is in place
-  (mix-allocate-channels channels))
+(defun get-track-audio (track)
+  "Return Query the audio assigned to a track."
+  (mix-get-track-audio track))
 
-(defun volume (channel volume)
-  "Set the volume on a given channel, pass -1 to set the volume for all
-channels. The volume may range from 0 to 128. Passing in a number higher than
-the maximum will automatically set it to the maximum while passing in a negatiev
-will automatically set it to 0. Returns the current volume of the channel. NOTE:
-Channels are 0 indexed!"
-  (mix-volume channel volume))
+(defun set-track-audio (track audio)
+  "Set a track's input to the audio."
+  (check-true (mix-set-track-audio track audio)))
 
-(defun play-channel (channel mix-chunk loops)
-  "Plays the mix-chunk (sound effect) loops+1 times on a given channel. Passing
--1 for the channel will play it on the first unreserved channel. Returns the
-channel the sample is played on. NOTE: Channels are 0 indexed!"
-  ;; The original Mix_PlayChannel function is just a function-like C
-  ;; preprocessor macro much like Mix_LoadWAV which was not in the spec.
-  ;; According to the docs Mix_PlayChannel is simply Mix_PlayChannelTimed with
-  ;; ticks set to -1
-  ;; https://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer_frame.html
-  (check-rc (mix-play-channel-timed channel mix-chunk loops -1)))
+(defun get-track-gain (track)
+  "Get a track's gain control."
+  (check-true (mix-get-track-gain track)))
 
-(defun set-channel-finished-callback (cffi-callback-channel-finished-fn)
-  "Sets a callback that will be invoked after the channel has finished
-playing. CFFI-CALLBACK-FINISHED-FN is defined with CFFI:DEFCALLBACK and uses a
-channel argument. Specifying a value of NIL will disable the callback."
-  (mix-channel-finished cffi-callback-channel-finished-fn))
+(defun set-track-gain (track gain)
+  "Set a track's gain control."
+  (declare (float gain))
+  (check-true (mix-set-track-gain track gain)))
 
-(defun playing (channel)
-  "Checks whether or not a channel is currently playing. It will return a 1 for
-playing and 0 otherwise. Passing -1 for the channel will specify how many
-channels are playing."
-  (mix-playing channel))
+(defun play-track (track &optional (options 0))
+  "Start (or restart) mixing a track for playback."
+  (check-true (mix-play-track track options)))
 
-(defun pause-channel (channel)
-  "Pauses the CHANNEL. A value of -1 will pause all channels."
-  (mix-pause channel))
+(defun set-track-stopped-callback (track cffi-callback-track-stopped-fn user-data)
+  "Set a callback that fires when a MIX_Track is stopped."
+  (check-true (mix-set-track-stopped-callback track cffi-callback-track-stopped-fn user-data)))
 
-(defun resume-channel (channel)
-  "Resumes a paused CHANNEL. A value of -1 will resume all channels."
-  (mix-resume channel))
+(defun destroy-track (track)
+  "Destroy the specified track."
+  (mix-destroy-track track))
 
-(defun paused-channel-p (channel)
-  "Returns T when the CHANNEL is paused."
-  (sdl-mixer-true-p (mix-paused channel)))
+(defun playing-p (track)
+  "Query if a track is currently playing."
+  (mix-track-playing track))
 
-(defun halt-channel (channel)
-  "Halt the channel or pass -1 to halt all channels. Always returns 0. NOTE:
-Channels are 0 indexed!"
-  (mix-halt-channel channel))
+(defun pause-track (track)
+  "Pause a currently-playing track."
+  (mix-pause-track track))
 
-(defun load-music (music-file-name)
-  "Loads music from a file. Returns a mix-music object"
-  (autocollect (ptr)
-               (check-null (mix-load-mus (namestring music-file-name)))
-    (mix-free-music ptr)))
+(defun resume-track (track)
+  "Resume a currently-paused track."
+  (mix-resume-track track))
 
-(defun free-music (mix-music-object)
-  "Free and invalidate the MIX-MUSIC-OBJECT."
-  (create-sdl-free-function mix-free-music mix-music-object))
+(defun paused-track-p (track)
+  "Returns T when the track is paused."
+  (sdl-mixer-true-p (mix-track-paused track)))
 
-(defun play-music (mix-music-object &optional (loops -1))
-  "Play the music as many times as specified by the optional loops argument. By
-default loops is -1 which makes the music loop indefinitely. Returns 0 on
-success -1 on error"
-  (check-rc (mix-play-music mix-music-object
-                            loops)))
-
-(defun set-music-finished-callback (cffi-callback-music-finished-fn)
-  "Sets a callback that will be invoked after the music has finished
-playing. CFFI-CALLBACK-MUSIC-FINISHED-FN is defined with CFFI:DEFCALLBACK and
-does not use any arguments. Using a value of NIL will disable the callback."
-  (mix-hook-music-finished cffi-callback-music-finished-fn))
-
-(defun playing-music-p ()
-  "Returns T when music is playing"
-  (sdl-mixer-true-p (mix-playing-music)))
-
-(defun fade-in-music (mix-music-object &optional (loops -1) (ms 1000))
-  "Fade in music over MS milliseconds and repeat as specified by LOOPS. The
-default number of milliseconds for fade in is 1000."
-  (check-rc (mix-fade-in-music mix-music-object loops ms)))
-
-(defun fade-out-music (ms)
-  "Fade out the music over MS milliseconds and then halt it."
-  (check-zero (mix-fade-out-music ms)))
-
-(defun pause-music ()
-  "Pause the music stream"
-  (mix-pause-music))
-
-(defun resume-music ()
-  "Resume the music stream"
-  (mix-resume-music))
-
-(defun paused-music-p ()
-  "Return T when the music stream is paused"
-  (sdl-mixer-true-p (mix-paused-music)))
-
-(defun halt-music ()
-  "Halts the playback of all music"
-  (mix-halt-music))
-
-(defun volume-music (music-volume)
-  "Adjust the volume of the music. Volume ranges from 0 to 128. The return value
-is an integer that usually represents the previous volume setting. Passing -1 as
-the music volume does not change the volume but instead returns the current
-volume setting"
-  (mix-volume-music music-volume))
+(defun stop-track (track fade-out-frames)
+  "Halt a currently-playing track, possibly fading out over time."
+  (check-true (mix-stop-track track fade-out-frames)))

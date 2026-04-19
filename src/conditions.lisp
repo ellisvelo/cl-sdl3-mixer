@@ -2,8 +2,6 @@
 
 (define-condition sdl-mixer-error (sdl3::sdl-rc-error) ())
 
-;;; Note, Mix_GetError doesn't exist, it's a #define for SDL_GetError
-
 (defmacro check-rc (form)
   (with-gensyms (rc)
     `(let ((,rc ,form))
