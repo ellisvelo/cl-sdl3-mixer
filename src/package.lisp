@@ -4,7 +4,10 @@
   (:export
    ;; Conditions
    #:sdl-mixer-error
-   ;; General
+   ;; Mixer
+   #:+prop-play-fade-in-milliseconds-number+
+   #:+prop-play-fade-in-milliseconds-number+
+   #:+prop-play-fade-in-start-gain-float+
    #:version
    #:init
    #:quit
@@ -20,12 +23,16 @@
    #:set-track-audio
    #:get-track-gain
    #:set-track-gain
+   #:get-track-loops
+   #:set-track-loops
    #:play-track
    #:set-track-stopped-callback
    #:destroy-track
-   #:playing-p
+   #:track-playing-p
    #:pause-track
    #:resume-track
    #:paused-track-p
-   #:stop-track)
+   #:stop-track
+   #:convert-track-ms-to-frames
+   #:convert-track-frames-to-ms)
   (:documentation "A Common Lisp wrapper for the SDL_Mixer 3.x C Library"))

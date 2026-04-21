@@ -1,10 +1,8 @@
 (in-package #:sdl3-mixer)
 
-(defmacro create-sdl-free-function (free-function sdl-object)
-  "A macro to free and invalidate the SDL-OBJECT."
-  `(progn (tg:cancel-finalization ,sdl-object)
-          (,free-function ,sdl-object)
-          (autowrap:invalidate ,sdl-object)))
+(defconstant +prop-play-fade-in-milliseconds-number+ sdl3-ffi:+mix-prop-play-fade-in-milliseconds-number+)
+(defconstant +prop-play-fade-in-milliseconds-number+ sdl3-ffi:+mix-prop-play-fade-in-milliseconds-number+)
+(defconstant +prop-play-fade-in-start-gain-float+ sdl3-ffi:+mix-prop-play-fade-in-start-gain-float+)
 
 (defun version ()
   "Get the version of SDL_mixer that is linked against your program and return
@@ -80,6 +78,20 @@ the major, minor, and micro version."
   (declare (float gain))
   (check-true (mix-set-track-gain track gain)))
 
+(defun get-track-loops (track)
+  "Query how many loops remain for a given track."
+  (mix-get-track-loops track))
+
+(defun set-track-loops (track num-loops)
+  "Change the number of times a currently-playing track will loop. This
+ replaces any previously-set remaining loops. A value of 1 will loop to the
+start of playback one time. Zero will not loop at all. A value of -1 requests
+infinite loops. If the input is not seekable and NUM-LOOPS isn't zero, this
+function will report success but the track will stop at the point it should
+loop."
+  (check-true (mix-set-track-loops track num-loops)))
+
+
 (defun play-track (track &optional (options 0))
   "Start (or restart) mixing a track for playback."
   (check-true (mix-play-track track options)))
@@ -92,7 +104,7 @@ the major, minor, and micro version."
   "Destroy the specified track."
   (mix-destroy-track track))
 
-(defun playing-p (track)
+(defun track-playing-p (track)
   "Query if a track is currently playing."
   (mix-track-playing track))
 
@@ -111,3 +123,11 @@ the major, minor, and micro version."
 (defun stop-track (track fade-out-frames)
   "Halt a currently-playing track, possibly fading out over time."
   (check-true (mix-stop-track track fade-out-frames)))
+
+(defun convert-track-ms-to-frames (track ms)
+  "Convert milliseconds to sample frames for a track's current format."
+  (check-rc (mix-track-ms-to-frames track ms)))
+
+(defun convert-track-frames-to-ms (track frames)
+  "Convert sample frames for a track's current format to milliseconds."
+  (check-rc (mix-track-frames-to-ms track frames)))
