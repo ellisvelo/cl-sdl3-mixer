@@ -92,11 +92,11 @@ loop."
   (check-true (mix-set-track-loops track num-loops)))
 
 
-(defun play-track (track &optional (options 0))
+(defun play-track (track &optional options)
   "Start (or restart) mixing a track for playback."
-  (check-true (mix-play-track track options)))
+  (check-true (mix-play-track track (or options 0))))
 
-(defun set-track-stopped-callback (track cffi-callback-track-stopped-fn user-data)
+(defun set-track-stopped-callback (track cffi-callback-track-stopped-fn &optional user-data)
   "Set a callback that fires when a MIX_Track is stopped."
   (check-true (mix-set-track-stopped-callback track cffi-callback-track-stopped-fn user-data)))
 
@@ -106,7 +106,7 @@ loop."
 
 (defun track-playing-p (track)
   "Query if a track is currently playing."
-  (mix-track-playing track))
+  ( sdl-mixer-true-p (mix-track-playing track)))
 
 (defun pause-track (track)
   "Pause a currently-playing track."
