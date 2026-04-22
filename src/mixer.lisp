@@ -4,6 +4,12 @@
 (defconstant +prop-play-fade-in-milliseconds-number+ sdl3-ffi:+mix-prop-play-fade-in-milliseconds-number+)
 (defconstant +prop-play-fade-in-start-gain-float+ sdl3-ffi:+mix-prop-play-fade-in-start-gain-float+)
 
+(defmacro create-sdl-destroy-function (destroy-function sdl-object)
+  "A macro to destroy and invalidate the SDL-OBJECT."
+  `(progn (tg:cancel-finalization ,sdl-object)
+          (,destroy-function ,sdl-object)
+          (autowrap:invalidate ,sdl-object)))
+
 (defun version ()
   "Get the version of SDL_mixer that is linked against your program and return
 the major, minor, and micro version."
@@ -46,7 +52,7 @@ the major, minor, and micro version."
 
 (defun destroy-mixer (mixer)
   "Closes the mixer"
-  (mix-destroy-mixer mixer))
+  (create-sdl-destroy-function mix-destroy-mixer mixer))
 
 (defun load-audio (mixer file-path &optional (predecode 0))
   "Load audio for playback from a file using the MIXER, FILE-PATH, and
@@ -55,7 +61,7 @@ the major, minor, and micro version."
 
 (defun destroy-audio (audio)
   "Destroy the specified audio."
-  (mix-destroy-audio audio))
+  (create-sdl-destroy-function mix-destroy-audio audio))
 
 (defun create-track (mixer)
   "Create a new track on a mixer."
@@ -102,11 +108,11 @@ loop."
 
 (defun destroy-track (track)
   "Destroy the specified track."
-  (mix-destroy-track track))
+  (create-sdl-destroy-function mix-destroy-track track))
 
 (defun track-playing-p (track)
   "Query if a track is currently playing."
-  ( sdl-mixer-true-p (mix-track-playing track)))
+  (sdl-mixer-true-p (mix-track-playing track)))
 
 (defun pause-track (track)
   "Pause a currently-playing track."
