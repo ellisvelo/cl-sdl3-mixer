@@ -4,6 +4,37 @@
 (defconstant +prop-play-fade-in-milliseconds-number+ sdl3-ffi:+mix-prop-play-fade-in-milliseconds-number+)
 (defconstant +prop-play-fade-in-start-gain-float+ sdl3-ffi:+mix-prop-play-fade-in-start-gain-float+)
 
+(defun mixer-equal-p (x y)
+  "Return T when the mixers are equivalent."
+  (cffi:pointer-eq (autowrap:ptr x) (autowrap:ptr y)))
+
+(defun mixer-hash (x)
+  "Use the mixer's pointer for hashing."
+  (cffi:pointer-address (autowrap:ptr x)))
+
+(define-custom-hash-table-constructor make-mixer-hash-table
+  :test mixer-equal-p :hash-function mixer-hash)
+
+(defvar *mixer-tracks* (make-mixer-hash-table)
+  "Maps the mixer with the tracks created for it.")
+
+(defvar *mixer-audio* nil
+  "List of audio created.")
+
+(defun %add-mixer-track (mixer track)
+  "Adds a track for tracking."
+  (with-custom-hash-table
+    (let* ((value (gethash mixer *mixer-tracks*))
+           (new-value (push track value)))
+      (setf (gethash mixer *mixer-tracks*) new-value))))
+
+(defun %remove-mixer-track (mixer track)
+  "Removes a track when destroyed."
+  (with-custom-hash-table
+    (let ((tracks (gethash mixer *mixer-tracks*)))
+      (when tracks
+        (setf (gethash mixer *mixer-tracks*) (remove track tracks))))))
+
 (defmacro create-sdl-destroy-function (destroy-function sdl-object)
   "A macro to destroy and invalidate the SDL-OBJECT."
   `(progn (tg:cancel-finalization ,sdl-object)
@@ -27,10 +58,6 @@ the major, minor, and micro version."
   "Initialize the SDL mixer."
   (mix-init))
 
-(defun quit ()
-  "Cleans up SDL Mixer."
-  (mix-quit))
-
 (defun create-mixer-device (&key (audio-device-id sdl3:+audio-device-default-playback+) audio-spec)
   "Create a mixer that plays sound directly to an audio device."
   (check-null (mix-create-mixer-device audio-device-id audio-spec)))
@@ -47,25 +74,34 @@ the major, minor, and micro version."
 
 (defun set-mixer-gain (mixer gain)
   "Set a mixer's master gain control."
-  (declare (float gain))
+  (check-type gain float)
   (check-true (mix-set-mixer-gain mixer gain)))
 
 (defun destroy-mixer (mixer)
   "Closes the mixer"
-  (create-sdl-destroy-function mix-destroy-mixer mixer))
+  (when (autowrap:valid-p mixer)
+    (with-custom-hash-table
+      (remhash mixer *mixer-tracks*))
+    (create-sdl-destroy-function mix-destroy-mixer mixer)))
 
 (defun load-audio (mixer file-path &optional (predecode 0))
   "Load audio for playback from a file using the MIXER, FILE-PATH, and
  optionally whether to return fully uncompressed data."
-  (check-null (mix-load-audio mixer (namestring file-path) predecode)))
+  (let ((audio (check-null (mix-load-audio mixer (namestring file-path) predecode))))
+    (setf *mixer-audio* (push audio *mixer-audio*))
+    audio))
 
 (defun destroy-audio (audio)
   "Destroy the specified audio."
-  (create-sdl-destroy-function mix-destroy-audio audio))
+  (when (autowrap:valid-p audio)
+    (setf *mixer-audio* (remove audio *mixer-audio*))
+    (create-sdl-destroy-function mix-destroy-audio audio)))
 
 (defun create-track (mixer)
   "Create a new track on a mixer."
-  (check-null (mix-create-track mixer)))
+  (let ((track (check-null (mix-create-track mixer))))
+    (%add-mixer-track mixer track)
+    track))
 
 (defun get-track-audio (track)
   "Return Query the audio assigned to a track."
@@ -81,7 +117,7 @@ the major, minor, and micro version."
 
 (defun set-track-gain (track gain)
   "Set a track's gain control."
-  (declare (float gain))
+  (check-type gain float)
   (check-true (mix-set-track-gain track gain)))
 
 (defun get-track-loops (track)
@@ -106,9 +142,15 @@ loop."
   "Set a callback that fires when a MIX_Track is stopped."
   (check-true (mix-set-track-stopped-callback track cffi-callback-track-stopped-fn user-data)))
 
+(defun get-track-mixer (track)
+  "Get the MIX_Mixer that owns a MIX_Track."
+  (check-null (mix-get-track-mixer track)))
+
 (defun destroy-track (track)
   "Destroy the specified track."
-  (create-sdl-destroy-function mix-destroy-track track))
+  (when (autowrap:valid-p track)
+    (%remove-mixer-track (get-track-mixer track) track)
+    (create-sdl-destroy-function mix-destroy-track track)))
 
 (defun track-playing-p (track)
   "Query if a track is currently playing."
@@ -137,3 +179,15 @@ loop."
 (defun convert-track-frames-to-ms (track frames)
   "Convert sample frames for a track's current format to milliseconds."
   (check-rc (mix-track-frames-to-ms track frames)))
+
+(defun quit ()
+  "Cleans up SDL Mixer by destroying mixers, tracks, and audio."
+  ;; destroys audio
+  (mapc #'(lambda (audio) (destroy-audio audio)) *mixer-audio*)
+
+  ;; destroy tracks and mixers
+  (with-custom-hash-table
+    (maphash #'(lambda (mixer tracks)
+                 (mapc #'(lambda (track) (destroy-track track)) tracks)
+                 (destroy-mixer mixer)) *mixer-tracks*))
+  (mix-quit))
