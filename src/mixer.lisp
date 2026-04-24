@@ -168,7 +168,7 @@ loop."
   "Returns T when the track is paused."
   (sdl-mixer-true-p (mix-track-paused track)))
 
-(defun stop-track (track fade-out-frames)
+(defun stop-track (track &optional (fade-out-frames 0))
   "Halt a currently-playing track, possibly fading out over time."
   (check-true (mix-stop-track track fade-out-frames)))
 
