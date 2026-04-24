@@ -1,6 +1,7 @@
 
 (defpackage #:sdl3-mixer
-  (:use #:cl #:alexandria #:autowrap.minimal #:plus-c #:sdl3-ffi.functions)
+  (:use #:cl #:alexandria #:autowrap.minimal #:plus-c #:sdl3-ffi.functions
+        #:cl-custom-hash-table)
   (:export
    ;; Conditions
    #:sdl-mixer-error
@@ -27,6 +28,7 @@
    #:set-track-loops
    #:play-track
    #:set-track-stopped-callback
+   #:get-track-mixer
    #:destroy-track
    #:track-playing-p
    #:pause-track
