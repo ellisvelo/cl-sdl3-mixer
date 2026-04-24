@@ -5,6 +5,7 @@
   :version "1.0"
   :depends-on (#:alexandria
                #:cl-autowrap
+               #:cl-custom-hash-table
                #:sdl3
                #:trivial-garbage)
   :pathname "src"
