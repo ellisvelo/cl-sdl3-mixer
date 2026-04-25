@@ -53,7 +53,7 @@ installed and not just 2.0. If you receive errors concerning unknown file types,
 please ensure that libSDL3_mixer is linked against the appropriate sound
 library, *e.g. libVorbis for ogg support*.
 
-If you are sure all of this is correct, and it still will not load, please [file an issue](https://github.com/lispgames/cl-sdl3-mixer/issues/new) and specify:
+If you are sure all of this is correct, and it still will not load, please [file an issue](https://github.com/ellisvelo/cl-sdl3-mixer/issues/new) and specify:
 
 * Your platform and architecture
 * Your lisp
