@@ -1,8 +1,26 @@
 (in-package #:sdl3-mixer)
 
-(defconstant +prop-play-fade-in-milliseconds-number+ sdl3-ffi:+mix-prop-play-fade-in-milliseconds-number+)
-(defconstant +prop-play-fade-in-milliseconds-number+ sdl3-ffi:+mix-prop-play-fade-in-milliseconds-number+)
-(defconstant +prop-play-fade-in-start-gain-float+ sdl3-ffi:+mix-prop-play-fade-in-start-gain-float+)
+(defconstant +prop-play-fade-in-frame-number+ sdl3-ffi:+mix-prop-play-fade-in-frames-number+
+  "The number of sample frames over which to fade in the newly-started track.")
+
+(defconstant +prop-play-fade-in-milliseconds-number+ sdl3-ffi:+mix-prop-play-fade-in-milliseconds-number+
+  "The number of milliseconds over which to fade in the newly-started track.")
+
+(defconstant +prop-play-fade-in-start-gain-float+ sdl3-ffi:+mix-prop-play-fade-in-start-gain-float+
+  "If fading in, start fading from this volume level. 0.0f is silence and 1.0f
+ is full volume, every in between is a linear change in gain.")
+
+(defconstant +prop-play-append-silence-frames-number+ sdl3-ffi:+mix-prop-play-append-silence-frames-number+
+  "At the end of mixing this track, after all loops are complete, append this
+ many sample frames of silence as if it were part of the audio file")
+
+(defconstant +prop-play-append-silence-milliseconds-number+ sdl3-ffi:+mix-prop-play-append-silence-milliseconds-number+
+  "At the end of mixing this track, after all loops are complete, append this
+ many sample milliseconds of silence as if it were part of the audio file")
+
+(defconstant +prop-play-halt-when-exhausted-boolean+ sdl3-ffi:+mix-prop-play-halt-when-exhausted-boolean+
+  "When true and the input is completely consumed for the track, then the mixer
+will mark the track as stopped and call any track stopped callbacks.")
 
 (defun mixer-equal-p (x y)
   "Return T when the mixers are equivalent."
@@ -132,7 +150,6 @@ infinite loops. If the input is not seekable and NUM-LOOPS isn't zero, this
 function will report success but the track will stop at the point it should
 loop."
   (check-true (mix-set-track-loops track num-loops)))
-
 
 (defun play-track (track &optional options)
   "Start (or restart) mixing a track for playback."

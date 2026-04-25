@@ -6,9 +6,12 @@
    ;; Conditions
    #:sdl-mixer-error
    ;; Mixer
-   #:+prop-play-fade-in-milliseconds-number+
+   #:+prop-play-fade-in-frame-number+
    #:+prop-play-fade-in-milliseconds-number+
    #:+prop-play-fade-in-start-gain-float+
+   #:+prop-play-append-silence-frames-number+
+   #:+prop-play-append-silence-milliseconds-number+
+   #:+prop-play-halt-when-exhausted-boolean+
    #:version
    #:init
    #:quit
