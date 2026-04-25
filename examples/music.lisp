@@ -24,7 +24,7 @@
                 (:key-down (:scancode scancode)
 			   (cond ((scancode= scancode :space)
 				  (format t "Playing Song~%")
-				  (sdl3-mixer:play-track music-track 1))
+				  (sdl3-mixer:play-track music-track))
 			         ((scancode= scancode :up)
 				  (when (< (+ current-volume volume-increment) 1.8)
 				    (incf current-volume volume-increment)
