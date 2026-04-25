@@ -2,9 +2,8 @@
 
 (define-condition sdl-mixer-error (sdl3::sdl-rc-error) ())
 
-;;; Note, Mix_GetError doesn't exist, it's a #define for SDL_GetError
-
 (defmacro check-rc (form)
+  "Signal an error when the FORM has a return code less than zero."
   (with-gensyms (rc)
     `(let ((,rc ,form))
        (when (< ,rc 0)
@@ -12,6 +11,7 @@
        ,rc)))
 
 (defmacro check-zero (form)
+  "Signal an error when the FORM has a return code of zero."
   (with-gensyms (rc)
     `(let ((,rc ,form))
        (when (zerop ,rc)
@@ -19,6 +19,7 @@
        ,rc)))
 
 (defmacro check-non-zero (form)
+  "Signal an error when the FORM does not return zero."
   (with-gensyms (rc)
     `(let ((,rc ,form))
        (unless (/= ,rc 0)
@@ -26,6 +27,7 @@
        ,rc)))
 
 (defmacro check-true (form)
+  "Signal an error when the FORM returns false."
   (with-gensyms (rc)
     `(let ((,rc ,form))
        (unless (sdl-mixer-true-p ,rc)
@@ -33,6 +35,7 @@
        ,rc)))
 
 (defmacro check-null (form)
+  "Signal an error when the FORM returns nil."
   (with-gensyms (wrapper)
     `(let ((,wrapper ,form))
        (if (cffi:null-pointer-p (autowrap:ptr ,wrapper))

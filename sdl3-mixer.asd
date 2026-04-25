@@ -1,10 +1,11 @@
 (asdf:defsystem #:sdl3-mixer
-  :description "Bindings for sdl3_mixer using autowrap"
-  :author ("Ryan Pavlik <rpavlik@gmail.com>, Michael Fiano <mail@mfiano.net>")
+  :description "Bindings for SDL3_mixer using autowrap"
+  :author ("Shawn Ellis <shawn.ellis17@gmail.com>")
   :license "MIT"
   :version "1.0"
   :depends-on (#:alexandria
                #:cl-autowrap
+               #:cl-custom-hash-table
                #:sdl3
                #:trivial-garbage)
   :pathname "src"
@@ -14,7 +15,7 @@
    (:file "library")
    (:file "autowrap")
    (:file "conditions")
-   (:file "general")
+   (:file "mixer")
    (:module autowrap-spec
     :pathname "spec"
     :components
